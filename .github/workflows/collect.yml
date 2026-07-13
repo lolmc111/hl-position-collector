@@ -1,0 +1,43 @@
+name: HL position collector
+
+# Snapshots Hyperliquid positions hourly and commits the growing CSVs back to the repo.
+# Hourly keeps a private repo comfortably inside the free Actions-minutes budget
+# (~2 min/run x 24/day ~= 1440 min/month < 2000). Make the repo public for unlimited
+# minutes if you want a finer cadence (all collected data is public on-chain info anyway).
+
+on:
+  schedule:
+    - cron: "0 * * * *"        # top of every hour
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collector
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests websocket-client
+
+      - name: Snapshot positions
+        run: python hl_snapshot.py
+
+      - name: Commit data
+        run: |
+          git config user.name "collector-bot"
+          git config user.email "collector-bot@users.noreply.github.com"
+          git add -f watchlist.json address_equity.csv positions_snapshots.csv liq_proximity.csv
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "snapshot $(date -u +%FT%TZ)"
+            git push
+          fi
