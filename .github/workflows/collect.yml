@@ -1,13 +1,11 @@
 name: HL position collector
 
-# Snapshots Hyperliquid positions hourly and commits the growing CSVs back to the repo.
-# Hourly keeps a private repo comfortably inside the free Actions-minutes budget
-# (~2 min/run x 24/day ~= 1440 min/month < 2000). Make the repo public for unlimited
-# minutes if you want a finer cadence (all collected data is public on-chain info anyway).
+# Snapshots Hyperliquid positions every 10 minutes and commits the growing CSVs back.
+# Repo is public so Actions minutes are unlimited (all collected data is public on-chain info).
 
 on:
   schedule:
-    - cron: "0 * * * *"        # top of every hour
+    - cron: "*/10 * * * *"     # every 10 minutes
   workflow_dispatch:
 
 permissions:
